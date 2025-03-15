@@ -34,7 +34,7 @@ const startApolloServer = async () => {
       context: async ({ req }) => {
         // Bypass authentication for addUser and login mutations
         const operationName = req.body.operationName;
-        if (operationName === 'addUser' || operationName === 'login') {
+        if (operationName === 'addUser' || operationName === 'Login') {
           return {};
         }
         const user = await authenticateToken({ req });

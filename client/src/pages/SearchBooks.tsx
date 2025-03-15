@@ -8,7 +8,8 @@ import {
   Card,
   Row
 } from 'react-bootstrap';
-
+import { useMutation } from '@apollo/client';
+import { SAVE_BOOK } from '../utils/mutations';
 import Auth from '../utils/auth';
 import { saveBook, searchGoogleBooks } from '../utils/API';
 import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
@@ -28,7 +29,10 @@ const SearchBooks = () => {
   // learn more here: https://reactjs.org/docs/hooks-effect.html#effects-with-cleanup
   useEffect(() => {
     return () => saveBookIds(savedBookIds);
-  });
+  }, [savedBookIds]);
+
+  // set up Apollo mutation hook
+  const [saveBookMutation] = useMutation(SAVE_BOOK);
 
   // create method to search for books and set state on form submit
   const handleFormSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -75,14 +79,25 @@ const SearchBooks = () => {
     }
 
     try {
-      const response = await saveBook(bookToSave, token);
+      // structure the variables per your BookInput type
+      const variables = { 
+        book: {
+          bookId: bookToSave.bookId,
+          authors: bookToSave.authors,
+          description: bookToSave.description,
+          title: bookToSave.title,
+          image: bookToSave.image,
+          link: bookToSave.link,
+        }
+      };
 
-      if (!response.ok) {
-        throw new Error('something went wrong!');
+      // call the mutation
+      const { data } = await saveBookMutation({ variables });
+
+      // if the mutation returns data, update savedBookIds state
+      if (data?.saveBook) {
+        setSavedBookIds([...savedBookIds, bookToSave.bookId]);
       }
-
-      // if book successfully saves to user's account, save book id to state
-      setSavedBookIds([...savedBookIds, bookToSave.bookId]);
     } catch (err) {
       console.error(err);
     }
