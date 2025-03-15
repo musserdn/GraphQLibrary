@@ -9,8 +9,10 @@ import { authenticateToken } from './services/auth.js';
 
 const server = new ApolloServer({
   typeDefs,
-  resolvers
+  resolvers,
+  introspection: true // Enable introspection
 });
+
 
 const startApolloServer = async () => {
   await server.start();
@@ -22,11 +24,20 @@ const startApolloServer = async () => {
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
 
-  app.use('/graphql', expressMiddleware(server as any,
-    {
-      context: authenticateToken as any
-    }
-  ));
+  app.use(
+    '/graphql',
+    expressMiddleware(server, {
+      context: async ({ req }) => {
+        // Bypass authentication for addUser and login mutations
+        const operationName = req.body.operationName;
+        if (operationName === 'addUser' || operationName === 'login') {
+          return {};
+        }
+        const user = await authenticateToken({ req });
+        return { user };
+      },
+    })
+  );
 
   if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, '../client/dist')));

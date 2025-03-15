@@ -1,7 +1,6 @@
 import User from '../models/User.js';
 import { signToken, AuthenticationError } from '../services/auth.js';
 
-
 interface UserArgs {
     id?: string;
     username?: string;
@@ -40,6 +39,7 @@ const resolvers = {
             return foundUser;
         },
     },
+
     Mutation: {
         addUser: async (_parent: any, args: AddUserArgs) => {
             const user = await User.create(args);
@@ -50,6 +50,7 @@ const resolvers = {
             const token = signToken(user.username, user.email, user._id);
             return { token, user };
         },
+
         login: async (_parent: any, args: LoginArgs) => {
             const user = await User.findOne({ $or: [{ username: args.username }, { email: args.email }] });
             if (!user) {
@@ -64,6 +65,7 @@ const resolvers = {
             const token = signToken(user.username, user.email, user._id);
             return { token, user };
         },
+
         saveBook: async (_parent: any, args: SaveBookArgs, context: any) => {
             if (!context.user) {
                 throw new AuthenticationError('You need to be logged in!');
@@ -81,6 +83,7 @@ const resolvers = {
                 throw new Error('Error saving book');
             }
         },
+        
         removeBook: async (_parent: any, args: RemoveBookArgs, context: any) => {
             if (!context.user) {
                 throw new AuthenticationError('You need to be logged in!');
