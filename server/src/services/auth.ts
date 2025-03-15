@@ -1,6 +1,5 @@
-import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-
+import { GraphQLError, GraphQLErrorOptions } from 'graphql';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -10,30 +9,41 @@ interface JwtPayload {
   email: string,
 }
 
-export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
+const secretKey = process.env.JWT_SECRET_KEY || '';
 
-  if (authHeader) {
-    const token = authHeader.split(' ')[1];
+export const authenticateToken = ({ req }: any) => {
+  let token = req.body.token || req.query.token || req.headers.authorization;
 
-    const secretKey = process.env.JWT_SECRET_KEY || '';
-
-    jwt.verify(token, secretKey, (err, user) => {
-      if (err) {
-        return res.sendStatus(403); // Forbidden
-      }
-
-      req.user = user as JwtPayload;
-      return next();
-    });
-  } else {
-    res.sendStatus(401); // Unauthorized
+  if (req.headers.authorization) {
+    token = token.split(' ').pop().trim();
   }
+
+  if (!token) {
+    throw new GraphQLError('No token provided');
+  }
+
+  try {
+    const decoded = jwt.verify(token, secretKey) as JwtPayload;
+    req.user = decoded;
+  } catch (err) {
+    console.error(err);
+    throw new GraphQLError('Invalid or expired token');
+  }
+  return req;
 };
 
-export const signToken = (username: string, email: string, _id: unknown) => {
-  const payload = { username, email, _id };
-  const secretKey = process.env.JWT_SECRET_KEY || '';
+export const signToken = (username: string, email: string, _id: unknown): string => {
+  const payload: JwtPayload = { username, email, _id };
 
   return jwt.sign(payload, secretKey, { expiresIn: '1h' });
+};
+
+export class AuthenticationError extends GraphQLError {
+  constructor(message: string) {
+    const options: GraphQLErrorOptions = {
+      extensions: { code: 'UNAUTHENTICATED' },
+    };
+    super(message, options);
+    Object.defineProperty(this, 'name', { value: 'AuthenticationError' });
+  }
 };
