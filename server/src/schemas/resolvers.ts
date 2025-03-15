@@ -70,13 +70,16 @@ const resolvers = {
             if (!context.user) {
                 throw new AuthenticationError('You need to be logged in!');
             }
-
+            // console.log('Context user:', context.user); 
+            // console.log('User ID:', context.user._id);
+            // console.log('Book to save:', args.book);
             try {
                 const updatedUser = await User.findOneAndUpdate(
                     { _id: context.user._id },
                     { $addToSet: { savedBooks: args.book } },
                     { new: true, runValidators: true }
                 );
+                console.log('Updated user:', updatedUser);
                 return updatedUser;
             } catch (err) {
                 console.log(err);

@@ -14,9 +14,7 @@ const __dirname = path.dirname(__filename);
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  introspection: true // Enable introspection
 });
-
 
 const startApolloServer = async () => {
   await server.start();
@@ -28,20 +26,11 @@ const startApolloServer = async () => {
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
 
-  app.use(
-    '/graphql',
-    expressMiddleware(server, {
-      context: async ({ req }) => {
-        // Bypass authentication for addUser and login mutations
-        const operationName = req.body.operationName;
-        if (operationName === 'addUser' || operationName === 'Login') {
-          return {};
-        }
-        const user = await authenticateToken({ req });
-        return { user };
-      },
-    })
-  );
+  app.use('/graphql', expressMiddleware(server as any,
+    {
+      context: authenticateToken as any
+    }
+  ))
 
   if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, '../../client/dist')));

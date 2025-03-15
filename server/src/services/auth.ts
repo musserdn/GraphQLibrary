@@ -4,18 +4,18 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 interface JwtPayload {
-  _id: unknown;
+  _id: string;
   username: string;
-  email: string,
+  email: string;
 }
 
 const secretKey = process.env.JWT_SECRET_KEY || '';
 
 export const authenticateToken = ({ req }: any) => {
-  let token = req.body.token || req.query.token || req.headers.authorization;
+  let token = req.headers.authorization;
 
   if (req.headers.authorization) {
-    token = token.split(' ').pop().trim();
+    token = token.split(' ')[1];
   }
 
   if (!token) {
@@ -24,6 +24,7 @@ export const authenticateToken = ({ req }: any) => {
 
   try {
     const decoded = jwt.verify(token, secretKey) as JwtPayload;
+    // console.log('Decoded token:', decoded);
     req.user = decoded;
   } catch (err) {
     console.error(err);
@@ -32,9 +33,8 @@ export const authenticateToken = ({ req }: any) => {
   return req;
 };
 
-export const signToken = (username: string, email: string, _id: unknown): string => {
+export const signToken = (username: string, email: string, _id: string): string => {
   const payload: JwtPayload = { username, email, _id };
-
   return jwt.sign(payload, secretKey, { expiresIn: '1h' });
 };
 
