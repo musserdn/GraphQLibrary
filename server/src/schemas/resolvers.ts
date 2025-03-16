@@ -79,7 +79,7 @@ const resolvers = {
                     { $addToSet: { savedBooks: args.book } },
                     { new: true, runValidators: true }
                 );
-                console.log('Updated user:', updatedUser);
+                // console.log('Updated user:', updatedUser);
                 return updatedUser;
             } catch (err) {
                 console.log(err);

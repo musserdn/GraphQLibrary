@@ -12,10 +12,13 @@ interface JwtPayload {
 const secretKey = process.env.JWT_SECRET_KEY || '';
 
 export const authenticateToken = ({ req }: any) => {
-  let token = req.headers.authorization;
+  const token = req.headers.authorization?.split(' ')[1];
 
-  if (req.headers.authorization) {
-    token = token.split(' ')[1];
+
+  const { operationName } = req.body;
+
+  if (operationName === 'addUser' || operationName === 'login') {
+    return req;
   }
 
   if (!token) {
@@ -24,12 +27,12 @@ export const authenticateToken = ({ req }: any) => {
 
   try {
     const decoded = jwt.verify(token, secretKey) as JwtPayload;
-    // console.log('Decoded token:', decoded);
     req.user = decoded;
   } catch (err) {
     console.error(err);
     throw new GraphQLError('Invalid or expired token');
   }
+
   return req;
 };
 
